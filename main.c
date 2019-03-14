@@ -26,7 +26,7 @@ int main(int argc, const char * argv[])
     signal(SIGINT ,handleQuit);
     signal(SIGQUIT ,handleQuit);
     signal(SIGTERM ,handleQuit);
-    
+
     char buffer [4000];
     Header header;
     State state;
@@ -46,17 +46,21 @@ int main(int argc, const char * argv[])
                 outSize = MessageType0Handler((MessageType0 *)buffer,&state,outMessage);
                 break;
             case 3:
-                outSize = MessageType3Handler((MessageType3 *)buffer,&state,outMessage);
+                do {
+                    outSize = MessageType3Handler((MessageType3 *) buffer, &state, outMessage);
+                    nn_send(socket,outMessage,outSize,0);
+                    state.lastSent = ((Header*)outMessage)->messageType;
+                } while (state.lastSent == 4);
+
                 break;
             case 6:
                 outSize = MessageType6Handler((MessageType6 *)buffer,&state,outMessage);
                 break;
             default:
                 outSize = MessageOtherHandler(buffer,header.messageType,&state,outMessage);
+                nn_send(socket,outMessage,outSize,0);
+                state.lastSent = ((Header*)outMessage)->messageType;
                 break;
         }
-
-        nn_send(socket,outMessage,outSize,0);
-        state.lastSent = ((Header*)outMessage)->messageType;
     }
 }
