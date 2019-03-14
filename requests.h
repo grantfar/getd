@@ -1,6 +1,8 @@
 #ifndef REQUESTS
 #define REQUESTS
 
+typedef
+
 typedef struct _header {
     unsigned char messageType;
     unsigned int messageLength;
