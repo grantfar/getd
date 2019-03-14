@@ -1,7 +1,11 @@
 #ifndef REQUESTS
 #define REQUESTS
 
-typedef
+typedef struct _state {
+    char sessionId[129];
+    unsigned  char lastSent;
+    unsigned  char lastRecieved;
+} State;
 
 typedef struct _header {
     unsigned char messageType;
