@@ -20,14 +20,16 @@ static int socket;
 static int bind;
 
 //ends the connection and exits the program, likely in case of an error
-void handleQuit(int sig) {
+void handleQuit(int sig)
+{
     free(outMessage);
     nn_shutdown(socket,bind);
     exit(0);
 }
 
 //opens socket connection and checks for messages to determine protocol
-int main(int argc, const char * argv[]) {
+int main(int argc, const char * argv[])
+{
     signal(SIGINT, handleQuit);
     signal(SIGQUIT, handleQuit);
     signal(SIGTERM, handleQuit);
