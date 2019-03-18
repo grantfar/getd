@@ -1,8 +1,15 @@
+/*
+//CS-5750-100 - Secure Software Development
+//Program 2: getd
+//Authors:
+//  Grant Farnsworth
+//  Joshua Sziede
+*/
 #include "requestVerify.h"
 #include <string.h>
 
 
-
+//checks messages of type 0 for issues
 unsigned int type0Ver(MessageType0 * message)
 {
     unsigned int retval = 0;
@@ -20,11 +27,13 @@ unsigned int type0Ver(MessageType0 * message)
     return retval;
 }
 
+//checks messages of type 3 for issues
 unsigned int type3Ver(MessageType3 * message)
 {
 
 }
 
+//checks messages of type 6 for issues
 unsigned int type6Ver(MessageType6 * message)
 {
 

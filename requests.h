@@ -1,3 +1,10 @@
+/*
+//CS-5750-100 - Secure Software Development
+//Program 2: getd
+//Authors:
+//  Grant Farnsworth
+//  Joshua Sziede
+*/
 #ifndef REQUESTS
 #define REQUESTS
 

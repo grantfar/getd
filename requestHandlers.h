@@ -1,7 +1,10 @@
-//
-// Created by grant on 3/14/19.
-//
-
+/*
+//CS-5750-100 - Secure Software Development
+//Program 2: getd
+//Authors:
+//  Grant Farnsworth
+//  Joshua Sziede
+*/
 #ifndef GETD_REQUESTHANDLERS_H
 #define GETD_REQUESTHANDLERS_H
 
