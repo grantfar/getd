@@ -65,11 +65,26 @@ int main(int argc, const char * argv[])
                 //if outSize is a good value, create Type 1 message using the state data and send to client
                 if (outSize == 0)
                 {
-                    
+                    //build type 1 message to send to client
+                    //length of the session id string including the null char
+                    int sidLength = strlen(state.sessionId) + 1;
+                    //message header
+                    Header t1Header;
+                    t1Header.messageType = 1;
+                    t1Header.messageLength = sizeof(int) + sidLength;
+                    MessageType1 t1;
+                    t1.header = t1Header;
+                    t1.sidLength = sidLength;
+                    //copy session id generated from the type 0 handler into the type 1 message
+                    strncpy(t1.sessionId, state.sessionId, sidLength);
+
+                    //send message
+                    nn_send(socket, (void *)t1, outSize, 0);
                 }
                 else
                 {
-
+                    //printf()
+                    handleQuit(0);
                 }
                 //else report error and close the connection
                 break;
