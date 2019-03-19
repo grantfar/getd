@@ -95,7 +95,7 @@ int main(int argc, const char * argv[])
                     
                     /*
                     //create type 2 message with error
-                    MessageType2 t2 = MessageType2Builder("error message here");
+                    MessageType2 *t2 = MessageType2Builder("error message here");
                     //header size + message size
                     int t2MessageLength = sizeof(char) + sizeof(int) + t2.header.messageLength;
                     //send message
