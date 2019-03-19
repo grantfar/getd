@@ -93,6 +93,14 @@ int main(int argc, const char * argv[])
                     //else if ...
                     */
                     
+                    /*
+                    //create type 2 message with error
+                    MessageType2 t2 = MessageType2Builder("error message here");
+                    //header size + message size
+                    int t2MessageLength = sizeof(char) + sizeof(int) + t2.header.messageLength;
+                    //send message
+                    nn_send(socket, (void *)t2, t2MessageLength, 0);
+                    */
                     handleQuit(0);
                 }
                 //else report error and close the connection

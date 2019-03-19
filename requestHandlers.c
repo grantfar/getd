@@ -127,4 +127,5 @@ MessageType2 MessageType2Builder(char *errorMsg)
     t2.msgLength = errorMsgLen;
     strncpy(t2.errorMessage, errorMsg, errorMsgLen);
     t2.errorMessage[errorMsgLen + 1] = '\0';
+    return t2;
 }
