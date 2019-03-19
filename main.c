@@ -62,15 +62,27 @@ int main(int argc, const char * argv[])
             //request session id
             case 0:
                 outSize = MessageType0Handler((MessageType0 *)buffer,&state,outMessage);
+                //if outSize is a good value, create Type 1 message using the state data and send to client
+                if (outSize == 0)
+                {
+                    
+                }
+                else
+                {
+
+                }
+                //else report error and close the connection
                 break;
             //request contents of a file
             case 3:
                 //keep checking for file fragments until whole file is received
-                do {
+                do
+                {
                     outSize = MessageType3Handler((MessageType3 *) buffer, &state, outMessage);
                     nn_send(socket,outMessage,outSize,0);
                     state.lastSent = ((Header*)outMessage)->messageType;
-                } while (state.lastSent == 4);
+                }
+                while (state.lastSent == 4);
 
                 break;
             //acknowledge receipt of type 4 message

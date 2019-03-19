@@ -10,6 +10,7 @@
 
 typedef struct _state {
     char sessionId[129];
+    char userName[33];
     unsigned  char lastSent;
     unsigned  char lastRecieved;
 } State;

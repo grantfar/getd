@@ -9,14 +9,34 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "requests.h"
 #include "requestHandlers.h"
 #include "requestVerify.h"
 #include <string.h>
 
-//establish session between get and getd with a unique session id
+//establish session between get and getd with a unique session id.
 int MessageType0Handler(MessageType0 * messageType0, State * state, void * outMessage)
 {
-
+    //check contents of message to ensure it is secure
+    int ver = type0Ver(messageType0);
+    //the length of the unique session id string
+    int sessionIdLength = 128;
+    //if the message is in proper form
+    if (ver == 0)
+    {
+        //store the username so we can later check if the requested file belongs to the user
+        state->userName = messageType0->distinguishedName;
+        state->sessionId = malloc(sizeof(char) * 129);
+        //generates random string using the chars found in possibleChars and assigns the string to sessionId
+        char possibleChars[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        while (sessionIdLength > 0) {
+            size_t index = (double) rand() / RAND_MAX * (sizeof possibleChars - 1);
+            state->sessionId[sessionIdLength] = possibleChars[index];
+            sessionIdLength = sessionIdLength - 1;
+        }
+        state->sessionId[129] = '\0';
+    }
+    return ver;
 }
 
 //request from get to receive a file from getd
@@ -30,6 +50,13 @@ int MessageType3Handler(MessageType3 * messageType3, State * state, void * outMe
     if(!((state->lastRecieved == 0 || state->lastRecieved == 3) && (state->lastSent == 1 || state->lastSent == 4) && ver == 0))
     {
         //send error message
+        /*
+        //Note:
+        //It might be better to have a separate function for creating
+        //Type 2 messages rather than remaking it for every message
+        //function. It can be called from main() whenever a handler
+        //function returns a bad value.
+        */
         MessageType2 * OutMessage = outMessage;
         OutMessage->header.messageType = 2;
         OutMessage->header.messageLength = sizeof(MessageType2) - sizeof(Header);
