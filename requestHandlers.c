@@ -29,7 +29,8 @@ int MessageType0Handler(MessageType0 * messageType0, State * state)
         state->sessionId = malloc(sizeof(char) * 129);
         //generates random string using the chars found in possibleChars and assigns the string to sessionId
         char possibleChars[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        while (sessionIdLength > 0) {
+        while (sessionIdLength > 0)
+        {
             size_t index = (double) rand() / RAND_MAX * (sizeof possibleChars - 1);
             state->sessionId[sessionIdLength] = possibleChars[index];
             sessionIdLength = sessionIdLength - 1;
@@ -37,6 +38,7 @@ int MessageType0Handler(MessageType0 * messageType0, State * state)
         state->sessionId[129] = '\0';
         return (sizeof(int) + (sizeof(char) * 129));
     }
+    //could return different negative value based on ver 
     else
     {
         return -1;
@@ -108,4 +110,21 @@ int MessageType6Handler(MessageType6 * messageType6, State * state, void * outMe
 int MessageOtherHandler(char * message, unsigned char type , State * state, void * outMessage)
 {
 
+}
+
+//builds a type 2 error message given a string containing the error message
+MessageType2 MessageType2Builder(char *errorMsg)
+{
+    //gets the length of the error message
+    int errorMsgLen = strlen(errorMsg);
+    //message header
+    Header t2Head;
+    t2Head.messageLength = errorMsgLen + sizeof(int);
+    t2Head.messageType = '2';
+    MessageType2 t2;
+    t2.header = t2Head;
+    //i am unsure if message length includes the null terminator or not
+    t2.msgLength = errorMsgLen;
+    strncpy(t2.errorMessage, errorMsg, errorMsgLen);
+    t2.errorMessage[errorMsgLen + 1] = '\0';
 }

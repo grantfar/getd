@@ -14,6 +14,7 @@
 #include "requestHandlers.h"
 #include <signal.h>
 #include <unistd.h>
+#include <stdio.h>
 
 static void * outMessage;
 static int socket;
@@ -85,7 +86,12 @@ int main(int argc, const char * argv[])
                 }
                 else
                 {
-                    //build type 2 message with error
+                    /*
+                    //build type 2 message with error based on what outSize returns
+                    //if outSize == -1 then return this error
+                    //else if outSize == -2 then return this error
+                    //else if ...
+                    */
                     
                     handleQuit(0);
                 }
