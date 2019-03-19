@@ -57,7 +57,7 @@ int main(int argc, const char * argv[])
         //stores the bytes received from a message
         bytesRecieved = nn_recv(socket,(void *)buffer,4000,0);
         //copies the first bytes of the message into header
-        memcpy(&header,buffer, sizeof(Header));
+        memcpy(&header, buffer, sizeof(Header));
         //determines which protocol to run based on the header
         switch(header.messageType){
             //request session id
@@ -66,17 +66,7 @@ int main(int argc, const char * argv[])
                 //if outSize is a good value, create Type 1 message using the state data and send to client
                 if (outSize >= 0)
                 {
-                    //build type 1 message to send to client
-                    //message header
-                    Header t1Header;
-                    t1Header.messageType = '1';
-                    t1Header.messageLength = outSize;
-                    MessageType1 t1;
-                    t1.header = t1Header;
-                    //gets the length of the session id since outSize is sidLength + sizeof(int)
-                    t1.sidLength = outSize - sizeof(int);
-                    //copy session id generated from the type 0 handler into the type 1 message
-                    strncpy(t1.sessionId, state.sessionId, sidLength);
+                    MessageType1 t1 = MessageType1Builder(outSize);
 
                     //gets the size of the type 1 message including its header
                     outSize += sizeof(char) + sizeof(int);
@@ -87,12 +77,6 @@ int main(int argc, const char * argv[])
                 }
                 else
                 {
-                    /*
-                    //build type 2 message with error based on what outSize returns
-                    //if outSize == -1 then return this error
-                    //else if outSize == -2 then return this error
-                    //else if ...
-                    */
                     MessageType2 *t2 = malloc(sizeof(MessageType2));
                     //create type 2 message with error
                     if (outSize == -1)
@@ -128,6 +112,7 @@ int main(int argc, const char * argv[])
                 outSize = MessageType6Handler((MessageType6 *)buffer,&state,outMessage);
                 break;
             //unrecognized message type
+            //maybe send a type 2 message?
             default:
                 outSize = MessageOtherHandler(buffer,header.messageType,&state,outMessage);
                 nn_send(socket,outMessage,outSize,0);

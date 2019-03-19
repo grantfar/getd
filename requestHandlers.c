@@ -131,15 +131,34 @@ int MessageOtherHandler(char * message, unsigned char type , State * state, void
 
 }
 
+//builds a type 1 message given a string containing the error message
+MessageType1 MessageType1Builder(int messageSize)
+{
+    //build the header
+    Header t1Header;
+    t1Header.messageType = '1';
+    t1Header.messageLength = messageSize;
+
+    MessageType1 t1;
+    t1.header = t1Header;
+    //gets the length of the session id since outSize is sidLength + sizeof(int)
+    t1.sidLength = messageSize - sizeof(int);
+    //copy session id generated from the type 0 handler into the type 1 message
+    strncpy(t1.sessionId, state.sessionId, sidLength);
+    return t1;
+}
+
 //builds a type 2 error message given a string containing the error message
 MessageType2 MessageType2Builder(char *errorMsg)
 {
     //gets the length of the error message
     int errorMsgLen = strlen(errorMsg);
+
     //message header
     Header t2Head;
     t2Head.messageLength = errorMsgLen + sizeof(int);
     t2Head.messageType = '2';
+
     MessageType2 t2;
     t2.header = t2Head;
     //i am unsure if message length includes the null terminator or not
@@ -154,10 +173,12 @@ MessageType5 MessageType5Builder(State * state)
 {
     //gets the length of the error message
     int sidLen = strnlen(state->sessionId, 129);
+
     //message header
     Header t5Head;
     t2Head.messageLength = sidLen + sizeof(int);
     t2Head.messageType = '2';
+    
     MessageType5 t5;
     t5.header = t5Head;
     //i am unsure if message length includes the null terminator or not
