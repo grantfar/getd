@@ -14,8 +14,10 @@
 #define TP0_NONULL 4
 #define TP0_MESSLEN 8
 
+#define SID_MISMATCH 16
+
 unsigned int type0Ver(MessageType0 * message);
 unsigned int type3Ver(MessageType3 * message);
-unsigned int type6Ver(MessageType6 * message);
+unsigned int type6Ver(MessageType6 * message, State * state);
 
 #endif

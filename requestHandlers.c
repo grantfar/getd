@@ -103,7 +103,21 @@ int MessageType3Handler(MessageType3 * messageType3, State * state, void * outMe
 //ackowledgement from get that it received a type 4 message from getd
 int MessageType6Handler(MessageType6 * messageType6, State * state, void * outMessage)
 {
-
+    int ver = type6Ver(messageType6, state);
+    //type 6 messages are acks of types 4 and 5 messages
+    if (state->lastSent != 4 || state->lastSent != 5)
+    {
+        return -1;
+    }
+    if (ver == 0)
+    {
+        //check if there are still file fragments to send
+    }
+    else
+    {
+        //else cancel file transfer?
+    }
+    
 }
 
 //unrecognized message types
