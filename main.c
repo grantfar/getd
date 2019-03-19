@@ -83,6 +83,7 @@ int main(int argc, const char * argv[])
  
                     //send message
                     nn_send(socket, (void *)t1, outSize, 0);
+                    state.lastSent = '1';
                 }
                 else
                 {
@@ -106,7 +107,7 @@ int main(int argc, const char * argv[])
                     int t2MessageLength = sizeof(char) + sizeof(int) + t2.header.messageLength;
                     //send message
                     nn_send(socket, (void *)t2, t2MessageLength, 0);
-                    handleQuit(0);
+                    state.lastSent = '2';
                 }
                 //else report error and close the connection
                 break;

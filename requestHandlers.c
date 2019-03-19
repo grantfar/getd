@@ -18,7 +18,7 @@
 int MessageType0Handler(MessageType0 * messageType0, State * state)
 {   
     //if a message type 0 was not the first message type received
-    if (state->lastSent != 5)
+    if (state->lastSent != '5' || state->lastSent != '2')
     {
         return -2;
     }
@@ -41,6 +41,7 @@ int MessageType0Handler(MessageType0 * messageType0, State * state)
             sessionIdLength = sessionIdLength - 1;
         }
         state->sessionId[129] = '\0';
+        state->lastRecieved = '0';
         return (sizeof(int) + (sizeof(char) * 129));
     }
     //could return different negative value based on ver 
