@@ -1,8 +1,16 @@
+/*
+//CS-5750-100 - Secure Software Development
+//Program 2: getd
+//Authors:
+//  Grant Farnsworth
+//  Joshua Sziede
+*/
 #ifndef REQUESTS
 #define REQUESTS
 
 typedef struct _state {
     char sessionId[129];
+    char userName[33];
     unsigned  char lastSent;
     unsigned  char lastRecieved;
 } State;
