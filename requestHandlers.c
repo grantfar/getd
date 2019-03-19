@@ -123,7 +123,6 @@ int MessageType6Handler(MessageType6 * messageType6, State * state, void * outMe
     {
         //else cancel file transfer?
     }
-    
 }
 
 //unrecognized message types
@@ -148,4 +147,22 @@ MessageType2 MessageType2Builder(char *errorMsg)
     strncpy(t2.errorMessage, errorMsg, errorMsgLen);
     t2.errorMessage[errorMsgLen + 1] = '\0';
     return t2;
+}
+
+//builds a type 5 message given the connection state for the session id
+MessageType5 MessageType5Builder(State * state)
+{
+    //gets the length of the error message
+    int sidLen = strnlen(state->sessionId, 129);
+    //message header
+    Header t5Head;
+    t2Head.messageLength = sidLen + sizeof(int);
+    t2Head.messageType = '2';
+    MessageType5 t5;
+    t5.header = t5Head;
+    //i am unsure if message length includes the null terminator or not
+    t5.sidLength = sidLen;
+    strncpy(t5.sessionId, state->sessionId, sidLen);
+    t5.sessionId[sidLen + 1] = '\0';
+    return t5;
 }
