@@ -12,6 +12,8 @@
 
 int MessageType0Handler(MessageType0 * messageType0, State * state, void * outMessage)
 {
+    if(state->lastSent != 5)
+
 
 }
 
@@ -27,6 +29,7 @@ int MessageType3Handler(MessageType3 * messageType3, State * state, void * outMe
         OutMessage->errorMessage[0] = '\0';
         if(!((state->lastRecieved == 0 || state->lastRecieved == 3) && (state->lastSent == 1 || state->lastSent == 4)))
             strcpy(OutMessage->errorMessage,"invalid state");
+
     }
 
     if(state->lastRecieved != 3 || state->lastSent != 4)
