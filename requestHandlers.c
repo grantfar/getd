@@ -16,7 +16,12 @@
 
 //establish session between get and getd with a unique session id.
 int MessageType0Handler(MessageType0 * messageType0, State * state)
-{
+{   
+    //if a message type 0 was not the first message type received
+    if (state->lastSent != 5)
+    {
+        return -2;
+    }
     //check contents of message to ensure it is secure
     int ver = type0Ver(messageType0);
     //the length of the unique session id string

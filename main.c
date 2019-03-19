@@ -92,15 +92,20 @@ int main(int argc, const char * argv[])
                     //else if outSize == -2 then return this error
                     //else if ...
                     */
-                    
-                    /*
+                    MessageType2 *t2 = malloc(sizeof(MessageType2));
                     //create type 2 message with error
-                    MessageType2 *t2 = MessageType2Builder("error message here");
+                    if (outSize == -1)
+                    {
+                        t2 = MessageType2Builder("Error: Message type 0 not formatted properly.");
+                    }
+                    else
+                    {
+                        t2 = MessageType2Builder("Error: Message type 0 received but connection already established.");
+                    }
                     //header size + message size
                     int t2MessageLength = sizeof(char) + sizeof(int) + t2.header.messageLength;
                     //send message
                     nn_send(socket, (void *)t2, t2MessageLength, 0);
-                    */
                     handleQuit(0);
                 }
                 //else report error and close the connection
