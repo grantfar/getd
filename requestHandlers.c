@@ -15,7 +15,7 @@
 #include <string.h>
 
 //establish session between get and getd with a unique session id.
-int MessageType0Handler(MessageType0 * messageType0, State * state, void * outMessage)
+int MessageType0Handler(MessageType0 * messageType0, State * state)
 {
     //check contents of message to ensure it is secure
     int ver = type0Ver(messageType0);
@@ -35,8 +35,13 @@ int MessageType0Handler(MessageType0 * messageType0, State * state, void * outMe
             sessionIdLength = sessionIdLength - 1;
         }
         state->sessionId[129] = '\0';
+        return (sizeof(int) + (sizeof(char) * 129));
     }
-    return ver;
+    else
+    {
+        return -1;
+    }
+    
 }
 
 //request from get to receive a file from getd

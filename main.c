@@ -60,36 +60,39 @@ int main(int argc, const char * argv[])
         //determines which protocol to run based on the header
         switch(header.messageType){
             //request session id
-            case 0:
-                outSize = MessageType0Handler((MessageType0 *)buffer,&state,outMessage);
+            case '0':
+                outSize = MessageType0Handler((MessageType0 *)buffer,&state);
                 //if outSize is a good value, create Type 1 message using the state data and send to client
-                if (outSize == 0)
+                if (outSize >= 0)
                 {
                     //build type 1 message to send to client
-                    //length of the session id string including the null char
-                    int sidLength = strlen(state.sessionId) + 1;
                     //message header
                     Header t1Header;
-                    t1Header.messageType = 1;
-                    t1Header.messageLength = sizeof(int) + sidLength;
+                    t1Header.messageType = '1';
+                    t1Header.messageLength = outSize;
                     MessageType1 t1;
                     t1.header = t1Header;
-                    t1.sidLength = sidLength;
+                    //gets the length of the session id since outSize is sidLength + sizeof(int)
+                    t1.sidLength = outSize - sizeof(int);
                     //copy session id generated from the type 0 handler into the type 1 message
                     strncpy(t1.sessionId, state.sessionId, sidLength);
 
+                    //gets the size of the type 1 message including its header
+                    outSize += sizeof(char) + sizeof(int);
+ 
                     //send message
                     nn_send(socket, (void *)t1, outSize, 0);
                 }
                 else
                 {
-                    //printf()
+                    //build type 2 message with error
+                    
                     handleQuit(0);
                 }
                 //else report error and close the connection
                 break;
             //request contents of a file
-            case 3:
+            case '3':
                 //keep checking for file fragments until whole file is received
                 do
                 {
@@ -101,7 +104,7 @@ int main(int argc, const char * argv[])
 
                 break;
             //acknowledge receipt of type 4 message
-            case 6:
+            case '6':
                 outSize = MessageType6Handler((MessageType6 *)buffer,&state,outMessage);
                 break;
             //unrecognized message type
