@@ -70,7 +70,9 @@ int MessageType3Handler(MessageType3 * messageType3, State * state, void * outMe
         return -1;
     }
 
+    //copies the received path name into the global path name so it can be used for multiple functions
     strncpy(pathName, messageType3->pathName, messageType3->pathLength);
+    state->lastRecieved = '3';
     return 0;
 }
 
@@ -79,22 +81,27 @@ int MessageType6Handler(MessageType6 * messageType6, State * state, void * outMe
 {
     int ver = type6Ver(messageType6, state);
     //type 6 messages are acks of types 4 and 5 messages
-    if (state->lastSent != 4 || state->lastSent != 5)
+    if (state->lastSent != '4' || state->lastSent != '5')
     {
         return -1;
     }
+
     if (ver == 0)
     {
+        //if end of file was reached, terminate connection with a type 5 message
+        state->lastRecieved = '6';
         if (eof == 1)
         {
             return 5;
         }
+        //else continue copying the file contents
         else
         {
             return 4;
         }
         
     }
+    //if the type 6 message was malformed
     else
     {
         return -1;
@@ -137,40 +144,57 @@ MessageType2 MessageType2Builder(char *errorMsg)
     return t2;
 }
 
+//builds a type 4 message by opening a file and copying its contents
 MessageType4 MessageType4Builder()
 {
+    //if a file has not been opened
     if (ptr == NULL)
     {
+        //attempt to open file
         ptr = fopen(pathName, "r");
         if (ptr == NULL) {
             return -1;
         }
     }
 
+    //stores one character at a time to be read from the file
     char ch;
+    //counts how many characters have been read from the file
     int index = 0;
+    //stores the copied contents of the file
     char buffer[4096];
+    //determines whether or not to keep looping during the file copy
     int loop = 1;
+    //set end of file to 0 to indicate a file has been opened but not fully read
     eof = 0;
+    //each loop copies one character from the file until end of file or buffer is full
     while (loop)
     {
+        //gets the current character from the file
         ch = fgetc(ptr);
+        //if end of file
         if (ch == EOF)
         {
+            //set eof bit and end the loop
             eof = 1;
             loop = 0;
+        //else if buffer is full, stop the loop
         } else if (index == 4095) {
             loop = 0;
         }
+        //store the file character into the buffer
         buffer[index] = ch;
     }
 
+    //gets length of the session id string
     int sidLen = strnlen(state->sessionId, 128);
 
+    //create header for message type 4
     Header t4Head;
     t4Head.messageLength = index + sidLen + (sizeof(int) * 2) + 1;
     t4Head.messageType = '4';
 
+    //build type 4 message
     MessageType4 t4;
     t4.header = t4Head;
     t4.sidLength = sidLen;

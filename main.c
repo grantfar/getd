@@ -93,13 +93,13 @@ int main(int argc, const char * argv[])
                     nn_send(socket, (void *)t2, t2MessageLength, 0);
                     state.lastSent = '2';
                 }
-                //else report error and close the connection
                 break;
             //request contents of a file
             case '3':
                 //keep checking for file fragments until whole file is received
                 outSize = MessageType3Handler((MessageType3 *)buffer, &state);
                 
+                //if type 3 message is ok, send type 4
                 if (outSize >= 0)
                 {
                     MessageType4 t4 = MessageType4Builder(state);
@@ -109,6 +109,7 @@ int main(int argc, const char * argv[])
                     nn_send(socket, (void *)t4, t4MessageLength, 0);
                     state.lastSent = '4';
                 }
+                //else there is an error with the type 3 message
                 else
                 {
                     MessageType2 t2 = MessageType2Builder("Error: Unexpected type 3 message or invalid type 3 format.");
