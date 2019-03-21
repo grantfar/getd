@@ -13,6 +13,11 @@
 #include "requestHandlers.h"
 #include "requestVerify.h"
 #include <string.h>
+#include <errno.h>
+#include <stdlib.h>
+
+//the requested file to be sent from getd
+static FILE * sendFile;
 
 //establish session between get and getd with a unique session id.
 int MessageType0Handler(MessageType0 * messageType0, State * state)
@@ -46,15 +51,15 @@ int MessageType0Handler(MessageType0 * messageType0, State * state)
     
 }
 
+
+
 //request from get to receive a file from getd
 int MessageType3Handler(MessageType3 * messageType3, State * state, void * outMessage)
 {
-    //the requested file to be sent from getd
-    static FILE * sendFile;
     //check if message is in proper form
     int ver = type3Ver(messageType3);
     //if getd was not expecting a message of type 3
-    if(!((state->lastRecieved == 0 || state->lastRecieved == 3) && (state->lastSent == 1 || state->lastSent == 4) && ver == 0))
+    if(state->lastRecieved == 0  || state->lastSent == 1 || ver == 0)
     {
         //send error message
         /*
@@ -73,20 +78,28 @@ int MessageType3Handler(MessageType3 * messageType3, State * state, void * outMe
 
     }
 
-    //if get makes initial request to receive a file
-    if(state->lastRecieved != 3 || state->lastSent != 4)
-        sendFile = fopen(messageType3->pathName);
-    //if get is expecting a file fragment?
-    /*
-    //Note:
-    //I think this is expecting get to continuously send a type 3 message if it
-    //receives a type 4 message from getd, but get should be sending a type 6
-    //message in this case rather than type 3 and handled in that function instead.
-    //I think it might be worth putting the file I/O in its own function outside of
-    //the type 4 handler and maybe using a global variable to handle the file state
-    //(such as the file pointer and its seek position) across multiple messages
-    //since this program isn't expected to be asynchronous.
-    */
+        sendFile = fopen(messageType3->pathName, "R");
+        if(sendFile == NULL) {
+            char errorMsg[257];
+            sprintf(errorMsg,"Failed to open file: %s",strerror(errno));
+            MessageType2 errorM = MessageType2Builder(errorMsg);
+            memcpy(outMessage,&errorM, sizeof(MessageType2));
+            return sizeof(MessageType2);
+        }
+        struct stat * openStat = malloc(sizeof(struct stat));
+
+        fstat(fileno(sendFile),openStat);
+        //Checks for if file is regular file
+        if(!S_ISREG(openStat->st_mode))
+        {
+            MessageType2 errorM = MessageType2Builder("Invalid File Type");
+            memcpy(outMessage,&errorM, sizeof(MessageType2));
+            free(openStat);
+            return sizeof(MessageType2);
+        }
+        free(openStat);
+    }
+
     if(state->lastRecieved == 3 && state->lastSent == 4)
     {
         if(feof(sendFile)){
@@ -106,17 +119,20 @@ int MessageType6Handler(MessageType6 * messageType6, State * state, void * outMe
 {
     int ver = type6Ver(messageType6, state);
     //type 6 messages are acks of types 4 and 5 messages
-    if (state->lastSent != 4 || state->lastSent != 5)
-    {
-        return -1;
+    if(ver != 0){
+        MessageType2 errorM = MessageType2Builder("Corrupt Type 2 Messege");
+        memcpy(outMessage,&errorM, sizeof(MessageType2));
+        return sizeof(MessageType2);
     }
-    if (ver == 0)
-    {
-        //check if there are still file fragments to send
+    if(state->lastSent == 4){
+
     }
-    else
-    {
-        //else cancel file transfer?
+    else if(state->lastSent == 5){
+
+    }
+
+    else{
+
     }
     
 }
@@ -124,7 +140,18 @@ int MessageType6Handler(MessageType6 * messageType6, State * state, void * outMe
 //unrecognized message types
 int MessageOtherHandler(char * message, unsigned char type , State * state, void * outMessage)
 {
+    char error [257];
+    sprintf(error,"Invalid Message Type: \"%u\"",(unsigned int)type);
+    MessageType2 errorM = MessageType2Builder(error);
+    memcpy(outMessage,&errorM, sizeof(MessageType2));
+    return sizeof(MessageType2);
+}
 
+
+void MessegeType4Builder(MessageType4 * out){
+    out->header.messageType = 4;
+    out->header.messageLength = sizeof(MessageType4) - sizeof(Header);
+    out->contentLength = fread(out->contentBuffer,4096,1,sendFile);
 }
 
 //builds a type 2 error message given a string containing the error message

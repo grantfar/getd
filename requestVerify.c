@@ -55,7 +55,7 @@ unsigned int type6Ver(MessageType6 * message, State * state)
     }
 
     //calculate endIndex
-    while((message->sessionId)[0] != '\0' && endIndex < 129)
+    while((message->sessionId)[endIndex] != '\0' && endIndex < 129)
         endIndex++;
     //if the type 6 session id length field is not the actual length of the session id
     if(message->sidLength != endIndex)

@@ -120,6 +120,7 @@ int main(int argc, const char * argv[])
             //acknowledge receipt of type 4 message
             case '6':
                 outSize = MessageType6Handler((MessageType6 *)buffer,&state,outMessage);
+                nn_send(socket,outMessage,outSize,0);
                 break;
             //unrecognized message type
             default:
