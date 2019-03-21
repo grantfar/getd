@@ -11,10 +11,10 @@
 #include "requests.h"
 
 int MessageType0Handler(MessageType0 * messageType0, State * state);
-int MessageType3Handler(MessageType3 * messageType3, State * state, void * outMessage);
-int MessageType6Handler(MessageType6 * messageType6, State * state, void * outMessage);
-int MessageOtherHandler(char * message, unsigned char type , State * state, void * outMessage);
+int MessageType3Handler(MessageType3 * messageType3, State * state);
+int MessageType6Handler(MessageType6 * messageType6, State * state);
 MessageType1 MessageType1Builder(int messageSize);
 MessageType2 MessageType2Builder(char * errorMsg);
+MessageType4 MessageType4Builder(State * state);
 MessageType5 MessageType5Builder(State * state);
 #endif //GETD_REQUESTHANDLERS_H

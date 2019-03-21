@@ -14,6 +14,10 @@
 #include "requestVerify.h"
 #include <string.h>
 
+char pathName[4097];
+FILE *ptr == NULL;
+int eof = -1;
+
 //establish session between get and getd with a unique session id.
 int MessageType0Handler(MessageType0 * messageType0, State * state)
 {   
@@ -59,51 +63,15 @@ int MessageType3Handler(MessageType3 * messageType3, State * state, void * outMe
     static FILE * sendFile;
     //check if message is in proper form
     int ver = type3Ver(messageType3);
+
     //if getd was not expecting a message of type 3
-    if(!((state->lastRecieved == 0 || state->lastRecieved == 3) && (state->lastSent == 1 || state->lastSent == 4) && ver == 0))
+    if(state.lastSent != '1' || ver > 0 || eof >= 0)
     {
-        //send error message
-        /*
-        //Note:
-        //It might be better to have a separate function for creating
-        //Type 2 messages rather than remaking it for every message
-        //function. It can be called from main() whenever a handler
-        //function returns a bad value.
-        */
-        MessageType2 * OutMessage = outMessage;
-        OutMessage->header.messageType = 2;
-        OutMessage->header.messageLength = sizeof(MessageType2) - sizeof(Header);
-        OutMessage->errorMessage[0] = '\0';
-        if(!((state->lastRecieved == 0 || state->lastRecieved == 3) && (state->lastSent == 1 || state->lastSent == 4)))
-            strcpy(OutMessage->errorMessage,"invalid state");
+        return -1;
     }
 
-    //if get makes initial request to receive a file
-    if(state->lastRecieved != 3 || state->lastSent != 4)
-        sendFile = fopen(messageType3->pathName);
-    //if get is expecting a file fragment?
-    /*
-    //Note:
-    //I think this is expecting get to continuously send a type 3 message if it
-    //receives a type 4 message from getd, but get should be sending a type 6
-    //message in this case rather than type 3 and handled in that function instead.
-    //I think it might be worth putting the file I/O in its own function outside of
-    //the type 4 handler and maybe using a global variable to handle the file state
-    //(such as the file pointer and its seek position) across multiple messages
-    //since this program isn't expected to be asynchronous.
-    */
-    if(state->lastRecieved == 3 && state->lastSent == 4)
-    {
-        if(feof(sendFile)){
-            fclose(sendFile);
-        }
-        else{
-            MessageType4 * OutMessege = outMessage;
-            OutMessege->header.messageType = 4;
-            OutMessege->header.messageLength = sizeof(MessageType4) - sizeof(Header);
-            OutMessege->contentLength = fread(OutMessege->contentBuffer,4096,1,sendFile);
-        }
-    }
+    strncpy(pathName, messageType3->pathName, messageType3->pathLength);
+    return 0;
 }
 
 //ackowledgement from get that it received a type 4 message from getd
@@ -117,18 +85,20 @@ int MessageType6Handler(MessageType6 * messageType6, State * state, void * outMe
     }
     if (ver == 0)
     {
-        //check if there are still file fragments to send
+        if (eof == 1)
+        {
+            return 5;
+        }
+        else
+        {
+            return 4;
+        }
+        
     }
     else
     {
-        //else cancel file transfer?
+        return -1;
     }
-}
-
-//unrecognized message types
-int MessageOtherHandler(char * message, unsigned char type , State * state, void * outMessage)
-{
-
 }
 
 //builds a type 1 message given a string containing the error message
@@ -156,16 +126,59 @@ MessageType2 MessageType2Builder(char *errorMsg)
 
     //message header
     Header t2Head;
-    t2Head.messageLength = errorMsgLen + sizeof(int);
+    t2Head.messageLength = errorMsgLen + sizeof(int) + 1;
     t2Head.messageType = '2';
 
     MessageType2 t2;
     t2.header = t2Head;
-    //i am unsure if message length includes the null terminator or not
     t2.msgLength = errorMsgLen;
     strncpy(t2.errorMessage, errorMsg, errorMsgLen);
     t2.errorMessage[errorMsgLen + 1] = '\0';
     return t2;
+}
+
+MessageType4 MessageType4Builder()
+{
+    if (ptr == NULL)
+    {
+        ptr = fopen(pathName, "r");
+        if (ptr == NULL) {
+            return -1;
+        }
+    }
+
+    char ch;
+    int index = 0;
+    char buffer[4096];
+    int loop = 1;
+    eof = 0;
+    while (loop)
+    {
+        ch = fgetc(ptr);
+        if (ch == EOF)
+        {
+            eof = 1;
+            loop = 0;
+        } else if (index == 4095) {
+            loop = 0;
+        }
+        buffer[index] = ch;
+    }
+
+    int sidLen = strnlen(state->sessionId, 128);
+
+    Header t4Head;
+    t4Head.messageLength = index + sidLen + (sizeof(int) * 2) + 1;
+    t4Head.messageType = '4';
+
+    MessageType4 t4;
+    t4.header = t4Head;
+    t4.sidLength = sidLen;
+    strncpy(t4.sessionId, state->sessionId, sidLen);
+    t4.sessionId[sidLen + 1] = '\0';
+    t4.contentLength = index;
+    strncpy(t4.contentBuffer, buffer, index);
+    return t4;
 }
 
 //builds a type 5 message given the connection state for the session id
@@ -176,12 +189,11 @@ MessageType5 MessageType5Builder(State * state)
 
     //message header
     Header t5Head;
-    t2Head.messageLength = sidLen + sizeof(int);
-    t2Head.messageType = '2';
+    t5Head.messageLength = sidLen + sizeof(int) + 1;
+    t5Head.messageType = '5';
     
     MessageType5 t5;
     t5.header = t5Head;
-    //i am unsure if message length includes the null terminator or not
     t5.sidLength = sidLen;
     strncpy(t5.sessionId, state->sessionId, sidLen);
     t5.sessionId[sidLen + 1] = '\0';
