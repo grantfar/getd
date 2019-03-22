@@ -37,7 +37,6 @@ unsigned int type0Ver(MessageType0 * message)
 //checks messages of type 3 for issues
 unsigned int type3Ver(MessageType3 * message)
 {
-
 }
 
 //checks messages of type 6 for issues

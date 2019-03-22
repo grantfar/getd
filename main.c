@@ -16,6 +16,8 @@
 #include <unistd.h>
 #include <stdio.h>
 
+#define asHeader(x) (*((Header*)(x)))
+
 static void * outMessage;
 static int socket;
 static int bind;
@@ -55,78 +57,29 @@ int main(int argc, const char * argv[])
     //listen for messages
     while (-1) {
         //stores the bytes received from a message
-        bytesRecieved = nn_recv(socket,(void *)buffer,4000,0);
-        //copies the first bytes of the message into header
-        memcpy(&header,buffer, sizeof(Header));
-        //determines which protocol to run based on the header
-        switch(header.messageType){
+         nn_recv (socket, buffer, 4000, 0);
+
+        switch(asHeader(buffer).messageType){
             //request session id
             case '0':
-                outSize = MessageType0Handler((MessageType0 *)buffer,&state);
-                //if outSize is a good value, create Type 1 message using the state data and send to client
-                if (outSize >= 0)
-                {
-                    //build type 1 message to send to client
-                    //message header
-                    Header t1Header;
-                    t1Header.messageType = '1';
-                    t1Header.messageLength = outSize;
-                    MessageType1 t1;
-                    t1.header = t1Header;
-                    //gets the length of the session id since outSize is sidLength + sizeof(int)
-                    t1.sidLength = outSize - sizeof(int);
-                    //copy session id generated from the type 0 handler into the type 1 message
-                    strncpy(t1.sessionId, state.sessionId, sidLength);
-
-                    //gets the size of the type 1 message including its header
-                    outSize += sizeof(char) + sizeof(int);
- 
-                    //send message
-                    nn_send(socket, (void *)t1, outSize, 0);
-                }
-                else
-                {
-                    /*
-                    //build type 2 message with error based on what outSize returns
-                    //if outSize == -1 then return this error
-                    //else if outSize == -2 then return this error
-                    //else if ...
-                    */
-                    
-                    /*
-                    //create type 2 message with error
-                    MessageType2 *t2 = MessageType2Builder("error message here");
-                    //header size + message size
-                    int t2MessageLength = sizeof(char) + sizeof(int) + t2.header.messageLength;
-                    //send message
-                    nn_send(socket, (void *)t2, t2MessageLength, 0);
-                    */
-                    handleQuit(0);
-                }
-                //else report error and close the connection
+                outSize = MessageType0Handler((MessageType0 *)buffer,&state,outMessage);
+                nn_send(socket, (void, outSize, 0);
                 break;
             //request contents of a file
             case '3':
-                //keep checking for file fragments until whole file is received
-                do
-                {
-                    outSize = MessageType3Handler((MessageType3 *) buffer, &state, outMessage);
-                    nn_send(socket,outMessage,outSize,0);
-                    state.lastSent = ((Header*)outMessage)->messageType;
-                }
-                while (state.lastSent == 4);
-
+                outSize = MessageType3Handler((MessageType3 *) buffer, &state, outMessage);
+                nn_send(socket,outMessage,outSize,0);
                 break;
             //acknowledge receipt of type 4 message
             case '6':
                 outSize = MessageType6Handler((MessageType6 *)buffer,&state,outMessage);
-                nn_send(socket,outMessage,outSize,0);
+                if(outSize != 0)
+                    nn_send(socket,outMessage,outSize,0);
                 break;
             //unrecognized message type
             default:
                 outSize = MessageOtherHandler(buffer,header.messageType,&state,outMessage);
                 nn_send(socket,outMessage,outSize,0);
-                state.lastSent = ((Header*)outMessage)->messageType;
                 break;
         }
     }
