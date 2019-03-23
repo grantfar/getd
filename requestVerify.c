@@ -8,7 +8,6 @@
 #include "requestVerify.h"
 #include <string.h>
 
-
 //checks messages of type 0 for issues
 unsigned int type0Ver(MessageType0 * message)
 {
@@ -37,6 +36,13 @@ unsigned int type0Ver(MessageType0 * message)
 //checks messages of type 3 for issues
 unsigned int type3Ver(MessageType3 * message)
 {
+    if(message->header.messageLength != message->sidLength + message->pathLength + sizeof(int) + sizeof(int))
+        return 1;
+    if(strnlen(message->sessionId,128)!=message->sidLength)
+        return 1;
+    if(strnlen(message->pathName,4096) != message->pathLength)
+        return 1;
+    return 0;
 }
 
 //checks messages of type 6 for issues
@@ -66,7 +72,7 @@ unsigned int type6Ver(MessageType6 * message, State * state)
     if(endIndex == 129)
         retval += TP0_NONULL;
     //if the message length is not what the header describes it as
-    if(message->header.messageLength != sizeof(MessageType6) - sizeof(Header))
+    if(message->header.messageLength != message->sidLength + sizeof(int);
         retval += TP0_MESSLEN;
     return retval;
 }
