@@ -21,7 +21,7 @@ unsigned int type0Ver(MessageType0 * message)
     if(message->dnLength > 32 )
         retval += TP0_DNLEN33P;
     //if the message length is not what the header describes it as
-    if(message->header.messageLength != sizeof(int) + message->dnLength)
+    if(message->header.messageLength != sizeof(MessageType0))
         retval += TP0_MESSLEN;
     return retval;
 }
@@ -29,7 +29,7 @@ unsigned int type0Ver(MessageType0 * message)
 //checks messages of type 3 for issues
 unsigned int type3Ver(MessageType3 * message)
 {
-    if(message->header.messageLength != message->sidLength + message->pathLength + sizeof(int) + sizeof(int))
+    if(message->header.messageLength != sizeof(MessageType3))
         return 1;
     if(strnlen(message->sessionId,128)!=message->sidLength)
         return 1;
@@ -68,7 +68,7 @@ unsigned int type6Ver(MessageType6 * message, State * state)
     if(endIndex == 129)
         retval += TP0_NONULL;
     //if the message length is not what the header describes it as
-    if(message->header.messageLength != message->sidLength + sizeof(int))
+    if(message->header.messageLength != sizeof(MessageType6))
         retval += TP0_MESSLEN;
     return retval;
 }

@@ -36,7 +36,7 @@ int main(int argc, const char * argv[])
     signal(SIGINT, handleQuit);
     signal(SIGQUIT, handleQuit);
     signal(SIGTERM, handleQuit);
-
+    printf("%lu\n", sizeof(MessageType0));
     char buffer [4000];
     //maintains information about the current session
     State state;
