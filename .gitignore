@@ -56,3 +56,10 @@ cmake-build-debug
 cmake-build-debug/*
 .idea/*
 .idea
+
+# Directories
+nanomsg1.1.5/
+
+# Binaries
+get
+getd
