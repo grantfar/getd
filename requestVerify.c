@@ -7,28 +7,21 @@
 */
 #include "requestVerify.h"
 #include <string.h>
-
+#include <stdio.h>
 //checks messages of type 0 for issues
 unsigned int type0Ver(MessageType0 * message)
 {
     //return value that determines which errors are encountered
     unsigned int retval = 0;
-    //index of the last non null character in the string
-    unsigned char endIndex = 0;
     //calculate endIndex
-    while((message->distinguishedName)[0] != '\0' && endIndex < 33)
-        endIndex++;
-    //if the type 0 distinguished name length field is not the actual length of the distinguished name
-    if(message->dnLength != endIndex)
+    size_t reallen = strnlen(message->distinguishedName,32);
+    if(reallen != (message->dnLength))
         retval += TP0_LENMATCH;
     //if the distinguished name length field is too large
     if(message->dnLength > 32 )
         retval += TP0_DNLEN33P;
-    //if the actual distinguished name string is too many characters or doesn't have a null terminator
-    if(endIndex == 33)
-        retval += TP0_NONULL;
     //if the message length is not what the header describes it as
-    if(message->header.messageLength != sizeof(MessageType0) - sizeof(Header))
+    if(message->header.messageLength != sizeof(int) + message->dnLength)
         retval += TP0_MESSLEN;
     return retval;
 }
@@ -54,6 +47,9 @@ unsigned int type6Ver(MessageType6 * message, State * state)
     //index of the last non null character in the string
     unsigned char endIndex = 0;
 
+    if(strnlen(message->sessionId,128) != message->sidLength)
+        retval+= TP0_DNLEN33P;
+
     //if the session id from type 6 is not the same as the session id stored in the state
     if (strncmp(state->sessionId, message->sessionId, message->sidLength) != 0) {
         retval += SID_MISMATCH;
@@ -72,7 +68,7 @@ unsigned int type6Ver(MessageType6 * message, State * state)
     if(endIndex == 129)
         retval += TP0_NONULL;
     //if the message length is not what the header describes it as
-    if(message->header.messageLength != message->sidLength + sizeof(int);
+    if(message->header.messageLength != message->sidLength + sizeof(int))
         retval += TP0_MESSLEN;
     return retval;
 }

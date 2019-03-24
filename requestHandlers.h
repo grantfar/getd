@@ -17,4 +17,5 @@ int MessageOtherHandler(char * message, unsigned char type , State * state, void
 int MessageType2Builder(MessageType2 * messageType2,char *errorMsg);
 int MessegeType4Builder(MessageType4 * out,State * state);
 int MessegeType5Builder(MessageType5 * out,State * state);
+int MessageType1Builder(MessageType1 * out, State * state);
 #endif //GETD_REQUESTHANDLERS_H

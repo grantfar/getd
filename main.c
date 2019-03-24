@@ -38,8 +38,6 @@ int main(int argc, const char * argv[])
     signal(SIGTERM, handleQuit);
 
     char buffer [4000];
-    //contains the message type and length of message
-    Header header;
     //maintains information about the current session
     State state;
     state.lastRecieved = 6;
@@ -49,8 +47,6 @@ int main(int argc, const char * argv[])
     //add endpoint to socket
     bind = nn_bind(socket,"ipc:///tmp/getd.ipc");
     //stores the number of bytes in the received message
-    unsigned int bytesRecieved;
-    //stoes the number of bytes in the sent message
     unsigned int outSize;
     outMessage = malloc(10000);
 
@@ -61,24 +57,24 @@ int main(int argc, const char * argv[])
 
         switch(asHeader(buffer).messageType){
             //request session id
-            case '0':
+            case 0:
                 outSize = MessageType0Handler((MessageType0 *)buffer,&state,outMessage);
-                nn_send(socket, (void, outSize, 0);
+                nn_send(socket, outMessage, outSize, 0);
                 break;
             //request contents of a file
-            case '3':
+            case 3:
                 outSize = MessageType3Handler((MessageType3 *) buffer, &state, outMessage);
                 nn_send(socket,outMessage,outSize,0);
                 break;
             //acknowledge receipt of type 4 message
-            case '6':
+            case 6:
                 outSize = MessageType6Handler((MessageType6 *)buffer,&state,outMessage);
                 if(outSize != 0)
                     nn_send(socket,outMessage,outSize,0);
                 break;
             //unrecognized message type
             default:
-                outSize = MessageOtherHandler(buffer,header.messageType,&state,outMessage);
+                outSize = MessageOtherHandler(buffer,asHeader(buffer).messageType,&state,outMessage);
                 nn_send(socket,outMessage,outSize,0);
                 break;
         }

@@ -26,7 +26,7 @@ int MessageType0Handler(MessageType0 * messageType0, State * state, void * outMe
     //check contents of message to ensure it is secure
     int ver = type0Ver(messageType0);
     //the length of the unique session id string
-    int sessionIdLength = 128;
+    int sessionIdLength = 127;
     //if the message is in proper form
 
     if(state->lastSent != 5 && state->lastSent != 2 )
@@ -34,25 +34,27 @@ int MessageType0Handler(MessageType0 * messageType0, State * state, void * outMe
         return MessageType2Builder(outMessage,"1 session at a time");
     }
 
-    if(ver != 0)
+    if(ver != 0){
+        state->lastSent = 2;
         return MessageType2Builder(outMessage,"Corrupt Type 0 Message");
+    }
     else
     {
         //store the username so we can later check if the requested file belongs to the user
-        state->userName = messageType0->distinguishedName;
+        strcpy(state->userName,messageType0->distinguishedName);
         state->sessionId[0] = '\0';
         //generates random string using the chars found in possibleChars and assigns the string to sessionId
         char possibleChars[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        while (sessionIdLength > 0)
+        while (sessionIdLength >= 0)
         {
             size_t index =  (size_t)(((double)rand()) / RAND_MAX * (sizeof possibleChars - 1));
             state->sessionId[sessionIdLength] = possibleChars[index];
             sessionIdLength = sessionIdLength - 1;
         }
-        state->sessionId[129] = '\0';
-        return sizeof(MessageType1);
+        state->sessionId[128] = '\0';
+        
     }
-
+    return MessageType1Builder(outMessage,state);
 }
 
 
@@ -60,10 +62,17 @@ int MessageType0Handler(MessageType0 * messageType0, State * state, void * outMe
 //request from get to receive a file from getd
 int MessageType3Handler(MessageType3 * messageType3, State * state, void * outMessage)
 {
-    if(strcmp(messageType3->sessionId,state->sessionId)!=0)
-        return MessageType2Builder(outMessage,"One session at a time");
     //check if message is in proper form
-    int ver = type3Ver(messageType3);
+    if(type3Ver(messageType3)) {
+        state->lastSent = 2;
+        return MessageType2Builder(outMessage, "Corrupt Message");
+    }
+
+    if(strncmp(messageType3->sessionId,state->sessionId,128)!=0) {
+        state->lastSent = 2;
+        return MessageType2Builder(outMessage, "One session at a time");
+    }
+
     //if getd was not expecting a message of type 3
     if(state->lastSent != 1)
     {
@@ -89,6 +98,8 @@ int MessageType3Handler(MessageType3 * messageType3, State * state, void * outMe
         return MessageType2Builder(outMessage,"Invalid File Type");
     }
     free(openStat);
+
+    return MessegeType4Builder(outMessage,state);
 }
 
 
@@ -132,8 +143,8 @@ int MessegeType4Builder(MessageType4 * out,State * state){
     out->contentLength = fread(out->contentBuffer,4096,1,sendFile);
     strcpy(out->sessionId,state->sessionId);
     out->sidLength = strlen(out->sessionId);
-    out->header.messageLength = out->sidLength + out->contentLength + 2*sizeof(int);
-    return out->header.messageLength;
+    out->header.messageLength = out->sidLength + 1 + out->contentLength + 2*sizeof(int);
+    return out->header.messageLength + sizeof(Header);
 }
 
 int MessegeType5Builder(MessageType5 * out,State * state){
@@ -141,8 +152,8 @@ int MessegeType5Builder(MessageType5 * out,State * state){
     out->header.messageType = 4;
     strcpy(out->sessionId,state->sessionId);
     out->sidLength = strlen(out->sessionId);
-    out->header.messageLength = out->sidLength + sizeof(int);
-    return out->header.messageLength;
+    out->header.messageLength = out->sidLength +1 + sizeof(int);
+    return out->header.messageLength + sizeof(Header);
 }
 
 //builds a type 2 error message given a string containing the error message
@@ -151,12 +162,21 @@ int MessageType2Builder(MessageType2 * messageType2,char *errorMsg)
     //gets the length of the error message
     int errorMsgLen = strlen(errorMsg);
     //message header
-    messageType2->header.messageLength = errorMsgLen + sizeof(int);
+    messageType2->header.messageLength = errorMsgLen + 1 + sizeof(int);
     messageType2->header.messageType = '2';
     //i am unsure if message length includes the null terminator or not
-    messageType2.msgLength = errorMsgLen;
+    messageType2->msgLength = errorMsgLen;
     strncpy(messageType2->errorMessage, errorMsg, errorMsgLen);
     messageType2->errorMessage[errorMsgLen + 1] = '\0';
 
-    return messageType2->header.messageLength;
+    return messageType2->header.messageLength + sizeof(Header);
+}
+
+int MessageType1Builder(MessageType1 * out, State * state){
+    out->header.messageType = 1;
+    strcpy(out->sessionId, state->sessionId);
+    out->sidLength = strlen(state->sessionId);
+    out->header.messageLength = out->sidLength +1 + sizeof(int);
+    state->lastSent = 1;
+    return out->header.messageLength + sizeof(Header);
 }
